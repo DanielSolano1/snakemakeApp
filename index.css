@@ -1,0 +1,91 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f6f8;
+  height: 100%;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-updater-node {
+  width: 200px;
+  min-height: 180px;
+  border: 1px solid #7e2d2d;
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  justify-content: space-between;
+}
+
+.text-updater-node input {
+  width: 90%;
+  padding: 6px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.rule_header {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.rule_header input {
+  width: 90%;
+  margin-top: 4px;
+  font-weight: normal;
+}
+
+button{
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Container around the entire Flow and button */
+.flow-container {
+  position: relative;
+  height: 100vh; /* or 500px if you want fixed height */
+  width: 100%;
+  background-color: #eef3fb; /* optional subtle background */
+}
+
+/* Add Node Button Styling */
+.add-node-button {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 10;
+  padding: 10px 16px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease;
+}
+
+.add-node-button:hover {
+  background-color: #4338ca;
+}
+
+/* Optional: Make sure the ReactFlow canvas takes full space */
+.react-flow {
+  height: 100%;
+  width: 100%;
+}

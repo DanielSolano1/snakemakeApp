@@ -1,0 +1,27 @@
+# Node modules and Vite build artifacts
+node_modules/
+dist/
+.vite/
+
+# Python virtual environments
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment variable files
+.env
+.env.*
+
+# Log files
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+.idea/
+
+# TypeScript cache
+*.tsbuildinfo

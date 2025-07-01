@@ -1,0 +1,10 @@
+{
+    "name": "samtools_sort",
+    "inputs":  "mapped/{sample}.bam",
+    "output": "mapped/{sample}.sorted.bam",
+    "logs": "logs/samtools_sort/{sample}.log",
+    "params": {
+        "extra": "-m 4G"
+    },
+    "wrapper": "master/bio/samtools/sort"
+}

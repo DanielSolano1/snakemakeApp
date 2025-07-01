@@ -6,11 +6,13 @@ function TextUpdaterNode(props) {
     console.log(evt.target.name, evt.target.value);
   }, []);
 
+  const nodeId = props.id; // Unique ID for this node instance
+
   return (
     <div className="text-updater-node" style={{ position: 'relative' }}>
       <div className="rule_header">
-        Rule name:
-        <input id="ruleName" name="ruleName" onChange={onChange} />
+        <label htmlFor={`ruleName-${nodeId}`}><strong>Rule name:</strong></label>
+        <input id={`ruleName-${nodeId}`} name="ruleName" onChange={onChange} />
       </div>
 
       {/* Input field with left handle */}
@@ -18,11 +20,11 @@ function TextUpdaterNode(props) {
         <Handle
           type="target"
           position={Position.Left}
-          id="input-handle"
+          id={`input-handle-${nodeId}`}
           style={{ top: 33, transform: 'translateY(-50%)', left: -10 }}
         />
-        <label htmlFor="input">Input</label>
-        <input id="input" name="input" onChange={onChange} className="nodrag" />
+        <label htmlFor={`input-${nodeId}`}>Input</label>
+        <input id={`input-${nodeId}`} name="input" onChange={onChange} className="nodrag" />
       </div>
 
       {/* Output field with right handle */}
@@ -30,11 +32,11 @@ function TextUpdaterNode(props) {
         <Handle
           type="source"
           position={Position.Right}
-          id="output-handle"
+          id={`output-handle-${nodeId}`}
           style={{ top: 34, transform: 'translateY(-50%)', right: -3 }}
         />
-        <label htmlFor="output">Output</label>
-        <input id="output" name="output" onChange={onChange} className="nodrag" />
+        <label htmlFor={`output-${nodeId}`}>Output</label>
+        <input id={`output-${nodeId}`} name="output" onChange={onChange} className="nodrag" />
       </div>
     </div>
   );

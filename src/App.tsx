@@ -1,19 +1,34 @@
 import * as React from 'react';
 import { useCallback, useState } from 'react';
-import { ReactFlow,Controls,Node } from '@xyflow/react';
+import {
+  ReactFlow,
+  Controls,
+  Node,
+  Edge,
+  applyNodeChanges,
+  applyEdgeChanges,
+  addEdge,
+  Connection,
+  NodeChange,
+  EdgeChange,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+
 import TextUpdaterNode from './TextUpdaterNode';
-import { applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
-// import bwa from 'rules/bwa_mem.json';
-// import sort from 'rules/samtools_sort.json';
-import { createNodeFromJson } from './createNodeFromJson';
 import DynamicNode from './dynamicNode';
+import { createNodeFromJson } from './createNodeFromJson';
 
 const rfStyle = {
   backgroundColor: '#B8CEFF',
 };
 
-const initialNodes = [
+// Define the structure of your Rule object (based on combined.json)
+interface Rule {
+  name: string;
+  [key: string]: any; // other optional fields
+}
+
+const initialNodes: Node[] = [
   {
     id: 'node-1',
     type: 'textUpdater',
@@ -28,90 +43,104 @@ const initialNodes = [
   },
 ];
 
-const initialEdges = [{ id: '1', source: 'node-1', target: 'node-2' }];
+const initialEdges: Edge[] = [{ id: '1', source: 'node-1', target: 'node-2' }];
 
-// we define the nodeTypes outside of the component to prevent re-renderings
-// you could also use useMemo inside the component
 const nodeTypes = { textUpdater: TextUpdaterNode, dynamic: DynamicNode };
 
 function App() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
+  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
 
-  function addNodes() {
-    const newNode = {
-      id: `node-${+new Date()}`,
+  const addNodes = () => {
+    const newNode: Node = {
+      id: `node-${Date.now()}`,
       type: 'textUpdater',
-      // Random position for the new node
       position: { x: Math.random() * 100, y: Math.random() * 150 },
-      data: { value: 123, label: 'new Node' },
+      data: { value: 123, label: 'New Node' },
     };
     setNodes((nds) => [...nds, newNode]);
-  }
+  };
 
   const onNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
   );
 
   const onEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    []
   );
+
   const onConnect = useCallback(
-    (connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
+    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    []
   );
 
-  function addWrapperNode() {
+  const addWrapperNode = () => {
+    fetch('rules/combined.json')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('Loaded rules:', data.rules);
+        setRules(data.rules || []);
+        setShowDropdown(true);
+      })
+      .catch((err) => {
+        console.error('Failed to load combined rules:', err);
+      });
+  };
 
-    fetch('/rules/samtools_sort.json') 
-    .then((res) => res.json())
-    .then((data) => {
-      const newWrapperNode = createNodeFromJson(data);
-      newWrapperNode.position = { 
-        x: Math.random() * 100, 
-        y: Math.random() * 150 };
-      setNodes((prev) => [...prev, newWrapperNode]);
-      console.log('New wrapper node added:', newWrapperNode);
-    })
-    .catch((err) => {
-      console.error('Failed to load rule:', err);
-    });
-  }
-    // const newWrapperNode = createNodeFromJson(bwa);
-    // // bwa is just the first rule we created bwa_mem.json
-    // //we are using sort right now
-    //newWrapperNode.position = { 
-    //x: Math.random() * 100, 
-    //y: Math.random() * 150 };
-    // setNodes((nds) => [...nds, newWrapperNode]);
-    // console.log('New wrapper node added:', newWrapperNode);
-
+  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = rules.find((rule) => rule.name === e.target.value);
+    setSelectedRule(selected || null);
+    console.log('Selected rule:', selected);
+    const newNode = createNodeFromJson(selected);
+      if (newNode) {
+        setNodes((nds) => [...nds, newNode]);
+      } else {
+        console.error('Failed to create node from selected rule');
+      }
+      e.target.value = "";
+  };
 
   return (
-    <div className="flow-container">
-      <button onClick={addNodes} className="add-basic-node-button">
-        Add Basic Node
-      </button>
-
-      <button onClick={addWrapperNode} className="add-wrapper-node-button">
-        Add Wrapper Node
-      </button>
-
-      <ReactFlow
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView
-        style={rfStyle}
+    <div className="flow-container" style={{ padding: '1rem', position: 'relative' }}>
+    <button onClick={addNodes} className="add-basic-node-button" style={{ marginRight: '10px' }}>
+      Add Basic Node
+    </button>
+  
+    <button onClick={addWrapperNode} className="add-wrapper-node-button">
+      Add Wrapper Node
+    </button>
+  
+    {showDropdown && (
+      <select
+        onChange={handleSelect}
+        defaultValue=""
+        className="canvas-dropdown"
       >
+        <option value="" disabled>Select a rule...</option>
+        {rules.map((rule, index) => (
+          <option key={index} value={rule.name}>{rule.name}</option>
+        ))}
+      </select>
+    )}
+  
+    <ReactFlow
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      fitView
+      style={rfStyle}
+    >
       <Controls />
-      </ReactFlow>
-    </div>
+    </ReactFlow>
+  </div>  
   );
 }
 

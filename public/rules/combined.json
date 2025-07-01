@@ -1,0 +1,29 @@
+{"rules":[
+    {
+        "name": "bwa_mem",
+        "inputs": {
+          "reads": ["reads/{sample}.1.fastq", "reads/{sample}.2.fastq"],
+          "idx": "multiext('genome', '.amb', '.ann', '.bwt', '.pac', '.sa')"
+        },
+        "output": "mapped/{sample}.bam",
+        "log": "logs/bwa_mem/{sample}.log",
+        "params": {
+          "extra": "-R '@RG\\tID:{sample}\\tSM:{sample}'",
+          "sorting": "none",
+          "sort_order": "queryname",
+          "sort_extra": ""
+        },
+        "wrapper": "master/bio/bwa/mem"
+      },
+      {
+        "name": "samtools_sort",
+        "inputs":  "mapped/{sample}.bam",
+        "output": "mapped/{sample}.sorted.bam",
+        "logs": "logs/samtools_sort/{sample}.log",
+        "params": {
+            "extra": "-m 4G"
+        },
+        "wrapper": "master/bio/samtools/sort"
+    }
+
+]}

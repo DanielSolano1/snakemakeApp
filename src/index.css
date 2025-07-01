@@ -8,10 +8,10 @@ body {
 }
 
 #app {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
 }
 
 .text-updater-node {
@@ -23,6 +23,12 @@ body {
   background: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   justify-content: space-between;
+}
+
+.text-updater-node:hover {
+  border-color: #b50e0e;
+  box-shadow: 15px 15px 20px rgba(0, 0, 0, 0.15);
+  cursor: pointer;  
 }
 
 .text-updater-node input {
@@ -66,7 +72,7 @@ button{
 .add-basic-node-button {
   position: absolute;
   top: 15px;
-  left: 15px;
+  left: 25px;
   z-index: 10;
   padding: 10px 16px;
   background-color: #4f46e5;
@@ -81,7 +87,9 @@ button{
 }
 
 .add-basic-node-button:hover{
-  background-color: #4338ca;
+  border-color: #b50e0e;
+  box-shadow: 15px 15px 20px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
 }
 
 .add-wrapper-node-button {
@@ -121,6 +129,11 @@ button{
   color: #1a202c;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
+.dynamic-updater-node:hover {
+  border-color: #b50e0e;
+  box-shadow: 15px 15px 20px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
 
 .dynamic-header {
   font-size: 16px;
@@ -142,4 +155,17 @@ button{
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid #cbd5e0;
+}
+
+.canvas-dropdown {
+  position: absolute;
+  top: 15px;
+  left: 400px;
+  z-index: 10;
+  background: white;
+  border: 2px solid #2b6cb0;
+  border-radius: 8px;
+  padding: 9px 15px;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }

@@ -79,6 +79,27 @@ function App() {
     []
   );
 
+  function exportRule() {
+    console.log(nodes)
+    const minimalNodes = nodes.map(node => ({
+      id: node.id,
+      data: node.data,
+    }));
+     
+    const edgeData = JSON.stringify(edges, null, 2);
+    const blah = JSON.stringify(minimalNodes, null, 2);
+    console.log('--- Exported Nodes ---\n', blah);
+    console.log('--- Exported Edges ---\n', edgeData);
+  
+    // Optionally return a combined JSON object
+    const exportObject = {
+      nodes: minimalNodes,
+      edges
+    };
+  
+    return JSON.stringify(exportObject, null, 2);
+  }
+
   const addWrapperNode = () => {
     fetch('rules/combined.json')
       .then((res) => res.json())
@@ -106,7 +127,7 @@ function App() {
   };
 
   return (
-    <div className="flow-container" style={{ padding: '1rem', position: 'relative' }}>
+    <div className="flow-container" style={{ padding: '1rem', position: 'absolute' }}>
     <button onClick={addNodes} className="add-basic-node-button" style={{ marginRight: '10px' }}>
       Add Basic Node
     </button>
@@ -128,6 +149,10 @@ function App() {
       </select>
     )}
   
+  <button onClick= {exportRule} className="export-button">
+    Export
+  </button>
+
     <ReactFlow
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
@@ -140,6 +165,7 @@ function App() {
     >
       <Controls />
     </ReactFlow>
+    
   </div>  
   );
 }

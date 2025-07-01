@@ -3,7 +3,7 @@ import {Node} from '@xyflow/react';
 
 export function createNodeFromJson(wrapper: any): Node{
     return {
-        id: `${wrapper.name}-${Date.now()}`,
+        id: `${wrapper.name}-${Date.now().toString().substring(0, 5)}`,
         type: wrapper.type || "dynamic",
         position: wrapper.position || { 
             x: Math.random() * 100, 

@@ -1,10 +1,13 @@
 {
     "name": "samtools_sort",
-    "inputs":  "mapped/{sample}.bam",
+    "input": "mapped/{sample}.bam",
     "output": "mapped/{sample}.sorted.bam",
-    "logs": "logs/samtools_sort/{sample}.log",
     "params": {
-        "extra": "-m 4G"
+      "extra": "-m 4G"
     },
-    "wrapper": "master/bio/samtools/sort"
-}
+    "log": "logs/{sample}.log",
+    "wrapper": "master/bio/samtools/sort",
+    "input_types": ["sam", "bam", "cram"],
+    "output_types": ["sam", "bam", "cram"]
+  }
+  

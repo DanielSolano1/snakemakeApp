@@ -1,29 +1,45 @@
 {"rules":[
-    {
-        "name": "bwa_mem",
-        "inputs": {
-          "reads": ["reads/{sample}.1.fastq", "reads/{sample}.2.fastq"],
-          "idx": "multiext('genome', '.amb', '.ann', '.bwt', '.pac', '.sa')"
-        },
-        "output": "mapped/{sample}.bam",
-        "log": "logs/bwa_mem/{sample}.log",
-        "params": {
-          "extra": "-R '@RG\\tID:{sample}\\tSM:{sample}'",
-          "sorting": "none",
-          "sort_order": "queryname",
-          "sort_extra": ""
-        },
-        "wrapper": "master/bio/bwa/mem"
-      },
-      {
-        "name": "samtools_sort",
-        "inputs":  "mapped/{sample}.bam",
-        "output": "mapped/{sample}.sorted.bam",
-        "logs": "logs/samtools_sort/{sample}.log",
-        "params": {
-            "extra": "-m 4G"
-        },
-        "wrapper": "master/bio/samtools/sort"
-    }
-
+  {
+    "name": "bwa_mem",
+    "input": {
+      "reads": ["reads/{sample}.1.fastq", "reads/{sample}.2.fastq"],
+      "idx": "multiext('genome', '.amb', '.ann', '.bwt', '.pac', '.sa')"
+    },
+    "output": "mapped/{sample}.bam",
+    "log": "logs/bwa_mem/{sample}.log",
+    "params": {
+      "extra": "-R '@RG\\tID:{sample}\\tSM:{sample}'",
+      "sorting": "none",
+      "sort_order": "queryname",
+      "sort_extra": ""
+    },
+    "wrapper": "master/bio/bwa/mem",
+    "input_types": ["fastq", "reference"],
+    "output_types": ["sam", "bam", "cram"]
+  }
+  ,
+  {
+    "name": "samtools_index",
+    "input": "mapped/{sample}.sorted.bam",
+    "output": "mapped/{sample}.sorted.bam.bai",
+    "params": {
+      "extra": ""
+    },
+    "log": "logs/samtools_index/{sample}.log",
+    "wrapper": "master/bio/samtools/index",
+    "input_types": ["bam"],
+    "output_types": ["bai"]
+  },
+  {
+    "name": "samtools_sort",
+    "input": "mapped/{sample}.bam",
+    "output": "mapped/{sample}.sorted.bam",
+    "params": {
+      "extra": "-m 4G"
+    },
+    "log": "logs/{sample}.log",
+    "wrapper": "master/bio/samtools/sort",
+    "input_types": ["sam", "bam", "cram"],
+    "output_types": ["sam", "bam", "cram"]
+  }
 ]}

@@ -1,6 +1,6 @@
 {
   "name": "bwa_mem",
-  "inputs": {
+  "input": {
     "reads": ["reads/{sample}.1.fastq", "reads/{sample}.2.fastq"],
     "idx": "multiext('genome', '.amb', '.ann', '.bwt', '.pac', '.sa')"
   },
@@ -12,5 +12,7 @@
     "sort_order": "queryname",
     "sort_extra": ""
   },
-  "wrapper": "master/bio/bwa/mem"
+  "wrapper": "master/bio/bwa/mem",
+  "input_types": ["fastq", "reference"],
+  "output_types": ["sam", "bam", "cram"]
 }

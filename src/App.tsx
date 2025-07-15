@@ -34,13 +34,13 @@ const initialNodes: Node[] = [
     id: 'node-1',
     type: 'textUpdater',
     position: { x: 10, y: 100 },
-    data: { value: 123 },
+    data: { name: "node-1", value: 123 },
   },
   {
     id: 'node-2',
     type: 'textUpdater',
     position: { x: 300, y: 100 },
-    data: { value: 123 },
+    data: { name: "node-2", value: 123 },
   },
 ];
 
@@ -54,8 +54,12 @@ function App() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
+  const [showTextbox, setShowTextbox] = useState(false);
+  const [outputText, setOutputText] = useState("");
+
 
   const addNodes = () => {
+    setShowTextbox(false);
     const newNode: Node = {
       id: `node-${Date.now()}`,
       type: 'textUpdater',
@@ -76,11 +80,12 @@ function App() {
   );
 
   const onConnect = useCallback((connection: Connection) => {
+    let isValid = true;
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
 
     if (!sourceNode || !targetNode) return;
-
+    const canConnect = false;
     if (sourceNode.id === targetNode.id) {
       console.error('Cannot connect a node to itself:', sourceNode.id);
       return;
@@ -101,23 +106,58 @@ function App() {
       return;
     }
 
-    // Check compatibility
-    const output = sourceNode.data?.output_types;
-    const input = targetNode.data?.input_types;
-
-
+    // Check compatibility of input/output types and set them to output/input
+    const output = sourceNode.data?.output_types || [];
+    const input = targetNode.data?.input_types || [];
     console.log(targetNode, " ", sourceNode);
+    console.log(output, " ", input);
+    console.log(typeof (input));
 
-
-    console.log(input, " ", output);
-
-    if(Array.isArray(input) && Array.isArray(output) && !output.some(type => input.includes(type))){
-      console.error("Incompatible connection: No matching output/input file types.");
+    if ((Array.isArray(output) && output.length === 0 || Array.isArray(input) && input.length === 0) || output === undefined || input === undefined) {
+      setEdges((eds) => addEdge(connection, eds)), [nodes, edges];
       return;
     }
 
-    setEdges((eds) => addEdge(connection, eds));
+    // checks if output_types overlap with input_types
+    if (Array.isArray(input) && Array.isArray(output) && !output.some(type => input.includes(type))) {
+      console.error("Incompatible connection: No matching output/input file types.");
+      isValid = false;
+    }
+
+    const knownTypes = ["bam", "cram", "sam", "fasta", "fastq", "vcf", "bed", "gff", "gtf", "csv"];
+
+    const inputTypes = (Array.isArray(input) ? input : []).flatMap(type => {
+      console.log(`Processing input type: ${type}`);
+      const extracted = extractFileTypes(type);
+      console.log(`From input "${type}" → extracted:`, extracted);
+      return extracted;
+    });
+
+    const outTypes = (Array.isArray(output) ? output : []).flatMap(type => {
+      console.log(`Processing output type: ${type}`);
+      const extracted = extractFileTypes(type);
+      console.log(`From output "${type}" → extracted:`, extracted);
+      return extracted;
+    });
+
+    console.log("Input Types:", inputTypes);
+    console.log("Output Types:", outTypes);
+
+    if (!isValid){
+      inputTypes.some((type) => outTypes.includes(type)) ? isValid = true : console.error("Input and Output types do not match.");
+    }
+
+    if (isValid) {
+      setEdges((eds) => addEdge(connection, eds));
+    }
   }, [nodes, edges]);
+
+
+
+  function extractFileTypes(str: string): string[] {
+    return str.toLowerCase().split(/[\/\s]+/).filter(type => type !== 'file' && type !== '(optional)' && type !== 'index');
+
+  }
 
   function hasCycle(adjList: Record<string, string[]>): boolean {
     const visited: Record<string, boolean> = {};
@@ -139,6 +179,8 @@ function App() {
   }
 
   function exportRule() {
+    setShowTextbox(false);
+
     const minimalNodes = nodes.map(node => ({
       id: node.id,
       data: node.data,
@@ -150,8 +192,10 @@ function App() {
     return JSON.stringify({ nodes: minimalNodes, edges }, null, 2);
   }
 
+
   const addWrapperNode = () => {
-    fetch('rules/combined.json')
+    setShowTextbox(false);
+    fetch("rules/parsed_rule.json")
       .then((res) => res.json())
       .then((data) => {
         setRules(data.rules || []);
@@ -162,7 +206,25 @@ function App() {
       });
   };
 
+  function showSnakemake() {
+    let result = "";
+    edges.forEach((element, index) => {
+      const sourceNode = nodes.find(node => node.id === element.source);
+      const targetNode = nodes.find(node => node.id === element.target);
+      if (sourceNode && targetNode) {
+        console.log(`Source Node ${sourceNode.id} connected to Target Node ${targetNode.id} `);
+        result += `${sourceNode.data.rule}\n ---->\n ${targetNode.data.rule}`;
+      } else {
+        console.error(`Node not found for edge ${index}:`, element);
+      }
+    });
+
+    setOutputText(result);
+    setShowTextbox(true); // now that it's populated, show the box
+  }
+
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setShowTextbox(false);
     const selected = rules.find((rule) => rule.name === e.target.value);
     setSelectedRule(selected || null);
     const newNode = createNodeFromJson(selected);
@@ -191,6 +253,11 @@ function App() {
       <button onClick={exportRule} className="export-button">
         Export
       </button>
+      <button onClick={showSnakemake} className="show-connected-button">
+        Show SNAKEMAKE
+      </button>
+      {showTextbox && (
+        <textarea id="textarea" value={outputText} readOnly ></textarea>)}
       <ReactFlow
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
@@ -198,10 +265,12 @@ function App() {
         nodes={nodes}
         edges={edges.map(edge => ({
           ...edge,
+          style: { stroke: 'black', strokeWidth: 3 }, // Apply custom style
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: 40,
-            height: 40,
+            width: 20,
+            height: 20,
+            color: 'black',
           }
         }))}
         nodeTypes={nodeTypes}

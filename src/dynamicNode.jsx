@@ -30,7 +30,7 @@ function DynamicNode(props) {
       style={{
         position: 'absolute',
         top: '50%',
-        left: '-10px',
+        left: '-13px',
         transform: 'translateY(-50%)',
       }}
     />
@@ -107,80 +107,5 @@ function DynamicNode(props) {
 </div>
   );
 }
-//     <div className="dynamic-updater-node" style={{ position: 'relative' }}>
-//       <div className="dynamic-header">
-//         <strong>Rule name:</strong> {name}
-//       </div>
-//       <strong>Inputs:</strong>
-
-//       <div className="dynamic-content">
-
-
-//         {isInputObject ? (
-//             <div style={{ position: 'relative', marginBottom: '6px', paddingLeft: '20px' }}>
-//                   <Handle
-//                     type="target"
-//                     position={Position.Left}
-//                     id={`input-handle-${id}`}
-//                     style={{
-//                       position: 'absolute',
-//                       top: '50%',
-//                       left: '-10px',
-//                       transform: 'translateY(-50%)',
-//                     }}
-//                   />
-//             </div>
-
-//           Object.entries(input).map(([key, value]) => (
-//             <div key={key}>
-//               {key}: {JSON.stringify(value)}
-//             </div>
-//           ))
-//         ) : (
-//           <div>{input}</div>
-//         )}
-
-//         {/* Outputs section with right handle */}
-//         <div style={{ position: 'relative', marginTop: '12px', paddingRight: '20px' }}>
-//           <Handle
-//             type="source"
-//             position={Position.Right}
-//             id={`output-handle-${id}`}
-//             style={{
-//               position: 'absolute',
-//               top: '50%',
-//               right: '-10px',
-//               transform: 'translateY(-50%)',
-//             }}
-//           />
-//           <strong>Outputs:</strong>
-//         </div>
-
-//         {isOutputObject ? (
-//           Object.entries(output).map(([key, value]) => (
-//             <div key={key}>
-//               {key}: {JSON.stringify(value)}
-//             </div>
-//           ))
-//         ) : (
-//           <div>{output}</div>
-//         )}
-
-//         {/* Params */}
-//         <strong>Params:</strong>
-//         {isParamsObject ? (
-//           Object.entries(params).map(([key, value]) => (
-//             <div key={key}>
-//               {key}: {JSON.stringify(value)}
-//             </div>
-//           ))
-//         ) : (
-//           <div>{params}</div>
-//         )}
-
-//       </div>
-//     </div>
-//   );
-// }
 
 export default DynamicNode;

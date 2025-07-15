@@ -15,6 +15,8 @@ export function createNodeFromJson(wrapper: any): Node{
             params: wrapper.params || {},
             input_types : wrapper.input_types || [],
             output_types: wrapper.output_types || [],
-        }
+            rule: wrapper.rule || null,
+        },
+        style: {stroke:'black', strokeWidth: 3},
     };
 }

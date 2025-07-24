@@ -56,6 +56,10 @@ function App() {
   const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
   const [showTextbox, setShowTextbox] = useState(false);
   const [outputText, setOutputText] = useState("");
+  const [exportText, setShowExport] = useState(false);
+  const [snakefileText, setSnakefileText] = useState("");
+
+
 
 
   const addNodes = () => {
@@ -80,6 +84,8 @@ function App() {
   );
 
   const onConnect = useCallback((connection: Connection) => {
+    // Validate connection before adding it
+
     let isValid = true;
     const sourceNode = nodes.find(node => node.id === connection.source);
     const targetNode = nodes.find(node => node.id === connection.target);
@@ -123,9 +129,6 @@ function App() {
       console.error("Incompatible connection: No matching output/input file types.");
       isValid = false;
     }
-
-    const knownTypes = ["bam", "cram", "sam", "fasta", "fastq", "vcf", "bed", "gff", "gtf", "csv"];
-
     const inputTypes = (Array.isArray(input) ? input : []).flatMap(type => {
       console.log(`Processing input type: ${type}`);
       const extracted = extractFileTypes(type);
@@ -142,21 +145,16 @@ function App() {
 
     console.log("Input Types:", inputTypes);
     console.log("Output Types:", outTypes);
-
-    if (!isValid){
+    if (!isValid) {
       inputTypes.some((type) => outTypes.includes(type)) ? isValid = true : console.error("Input and Output types do not match.");
     }
-
     if (isValid) {
       setEdges((eds) => addEdge(connection, eds));
     }
   }, [nodes, edges]);
 
-
-
   function extractFileTypes(str: string): string[] {
     return str.toLowerCase().split(/[\/\s]+/).filter(type => type !== 'file' && type !== '(optional)' && type !== 'index');
-
   }
 
   function hasCycle(adjList: Record<string, string[]>): boolean {
@@ -180,21 +178,37 @@ function App() {
 
   function exportRule() {
     setShowTextbox(false);
-
     const minimalNodes = nodes.map(node => ({
       id: node.id,
       data: node.data,
     }));
-
+    console.log('--- Exported SnakeMake ---\n', snakefileText);
     console.log('--- Exported Nodes ---\n', JSON.stringify(minimalNodes, null, 2));
     console.log('--- Exported Edges ---\n', JSON.stringify(edges, null, 2));
+    
+// Create a Blob object from the content
+const blob = new Blob([snakefileText], { type: 'text/plain;charset=utf-8' });
 
-    return JSON.stringify({ nodes: minimalNodes, edges }, null, 2);
-  }
+// Create a URL for the Blob
+const url = URL.createObjectURL(blob);
 
+// Create a temporary anchor element
+const a = document.createElement('a');
+a.href = url;
+a.download = 'Snakefile'; // Set the desired filename for download
+
+// Programmatically click the anchor element to trigger download
+document.body.appendChild(a); // Append to body to ensure it's in the DOM
+a.click();
+
+// Clean up by revoking the object URL and removing the anchor element
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
 
   const addWrapperNode = () => {
     setShowTextbox(false);
+    setShowExport(false);
     fetch("rules/parsed_rule.json")
       .then((res) => res.json())
       .then((data) => {
@@ -206,25 +220,68 @@ function App() {
       });
   };
 
+  function buildAdjacencyList(): Record<string, string[]> {
+    const tempEdges = [...edges];
+    const adjacencyList: Record<string, string[]> = {};
+
+    tempEdges.forEach(({ source, target }) => {
+      if (!adjacencyList[source]) {
+        adjacencyList[source] = [];
+      }
+      adjacencyList[source].push(target);
+    });
+    return adjacencyList;
+  }
+
   function showSnakemake() {
-    let result = "";
+/* 
+  This function generates a Snakemake file based on the current nodes and edges.
+  It collects the rules from the nodes and formats them into a Snakemake script.
+  It also includes wildcards specified by the user in an input field.
+*/ 
+
+    let wildcards = (document.getElementById('wildcard2') as HTMLInputElement).value;
+    let seen = new Set<string>();
+    let lastEdge = edges[edges.length - 1];
+    let lastNode = nodes.find(node => node.id === lastEdge.target);
+    
+    let output = lastNode?.data.output || [];
+    console.log("Last Node: ", output);
+    console.log(Object.values(output));
+    console.log(Object.values(output)[0]);
+
+    let outputValue = Object.values(output)[0];
+    let samples: string[] = [];
+    wildcards.split(/[ ,]+/).forEach((blah, index) => {
+            console.log(`Wildcard ${index}:`, blah.toString());
+            samples.push(`"${blah}"`);
+        });
+
+
+
+    let result = `SAMPLES = [${samples}]\n\nrule all:\n    input:\n        expand("${outputValue}",sample = SAMPLES)\n\n`;    
+
     edges.forEach((element, index) => {
       const sourceNode = nodes.find(node => node.id === element.source);
       const targetNode = nodes.find(node => node.id === element.target);
-      if (sourceNode && targetNode) {
-        console.log(`Source Node ${sourceNode.id} connected to Target Node ${targetNode.id} `);
-        result += `${sourceNode.data.rule}\n ---->\n ${targetNode.data.rule}`;
-      } else {
-        console.error(`Node not found for edge ${index}:`, element);
-      }
+      console.log(`Edge ${index}:`, element);
+      [sourceNode, targetNode].forEach(node => {
+        if(node && !seen.has(node.id)) {
+          seen.add(node.id);
+          result += `${node.data.rule}\n`;
+        }
     });
-
-    setOutputText(result);
-    setShowTextbox(true); // now that it's populated, show the box
-  }
+  });
+  setShowExport(true);
+  setSnakefileText(result); 
+  setOutputText(result);
+  setShowTextbox(true); // now that it's populated, show the box
+}
 
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setShowTextbox(false);
+    setShowExport(false);
+
     const selected = rules.find((rule) => rule.name === e.target.value);
     setSelectedRule(selected || null);
     const newNode = createNodeFromJson(selected);
@@ -246,18 +303,19 @@ function App() {
         <select onChange={handleSelect} defaultValue="" className="canvas-dropdown">
           <option value="" disabled>Select a rule...</option>
           {rules.map((rule, index) => (
-            <option key={index} value={rule.name}>{rule.name}</option>
+            <option key={index} value={rule.name}>{rule.name.replace(/[-_]/g, ' ')}</option>
           ))}
         </select>
       )}
-      <button onClick={exportRule} className="export-button">
+      {exportText && <button onClick={exportRule} className="export-button">
         Export
-      </button>
+      </button>}
       <button onClick={showSnakemake} className="show-connected-button">
         Show SNAKEMAKE
       </button>
-      {showTextbox && (
-        <textarea id="textarea" value={outputText} readOnly ></textarea>)}
+      {showTextbox && (<textarea id="textarea" value={outputText} readOnly ></textarea>)}
+        
+      <input type="text" id="wildcard2" placeholder="Enter Wildcards"/>
       <ReactFlow
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

@@ -21,23 +21,33 @@ workflow = SimpleNamespace(
     sourcecache=DummySourceCache()
 )
 
-# sourcefile = FakeSourceFile(snakefile_path)
 linemap = {}
 
-# parsed_code, rule_count = parse(sourcefile, workflow, linemap)
 
-# print("Parsed code:\n", parsed_code)
 
 all_rules = []
 seen_rules = set()
 
+def find_yaml(path):
+    """
+    Find the meta.yaml file in the directory structure.
+    """
+    while True:
+        if os.path.exists(os.path.join(path, "meta.yaml")):
+            return os.path.join(path, "meta.yaml")
+        path = os.path.dirname(path)
 
 def extract_yaml(path):
+    """
+    Extract input and output types from the meta.yaml file.
+    """
     with open(path,'r') as f:
         meta = yaml.safe_load(f)
 
     input_types = meta.get('input', {})
     output_types = meta.get('output', {})
+    print("Input types:", input_types)  
+    print("Output types:", output_types)
     return input_types, output_types
 
 def snakemake(path):
@@ -46,12 +56,9 @@ def snakemake(path):
     meta_path = os.path.join(meta_dir, "meta.yaml")
     input_types,output_types = extract_yaml(meta_path)
 
-    # print("Input types:", input_types)
-    # print("Output types:", output_types)
 
     with open(path, 'r') as f:
         snakefile_content = f.read()
-    # print("\n Snakefile content:\n", snakefile_content)
 
     node = ast.parse(parsed_code)
     print("AST representation of the parsed code:")
@@ -117,11 +124,30 @@ def snakemake(path):
 
 
 # all_paths = glob.glob("snakemake-wrappers/**/test/Snakefile", recursive=True)
-all_paths = glob.glob("snakemake-wrappers/bio/**/test/Snakefile", recursive=True)
+# all_paths = glob.glob("snakemake-wrappers/bio/**/test/Snakefile", recursive=True)
+# your raw patterns
+
+# ------------------------------------------------------------
+# ⚠️  WARNING: Some wrappers declare the same rule name
+# (e.g. “bwa_mem” appears in both bwa/mem and bwa/mem‑samblaster).
+# If you don’t check for duplicates, the second one silently gets dropped!
+# We need to find a solution for this later.
+# ------------------------------------------------------------
+
+patterns = [
+    "snakemake-wrappers/bio/bwa/**/test/Snakefile",
+    "snakemake-wrappers/bio/samtools/**/test/Snakefile",
+    "snakemake-wrappers/bio/bcftools/**/test/Snakefile",
+]
+
+all_paths = sorted([filepath for pattern in patterns for filepath in glob.glob(pattern, recursive=True)])
+
 for path in all_paths:
+    print(f"\nPROCESSIN {path}...")
     try:
         sourcefile = FakeSourceFile(path)
         parsed_code, rule_count = parse(sourcefile, workflow, linemap)
+
         snakemake(path)
     except Exception as e:
         print(f"Error in {path}: {e}")
